@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freebie Tingz - Premium Logistics Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-50 font-sans min-h-screen flex flex-col justify-between">
+
+    <div>
+        <!-- Navigation Header -->
+        <nav class="bg-indigo-600 text-white shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-white text-indigo-600 p-2 rounded-lg font-bold text-xl shadow-inner">
+                            <i class="fa-solid fa-box-open"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-lg block tracking-tight">Freebie Tingz</span>
+                            <span class="text-xs text-indigo-200 block -mt-1">14-Day Stalled Transit Alert System Matrix</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button onclick="openPrivacyModal()" class="bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-semibold py-2 px-3 rounded-lg border border-indigo-500 transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-user-shield"></i> <span class="hidden md:inline">Privacy & Terms</span>
+                        </button>
+                        <button onclick="triggerAiGeneration()" id="ai-generate-btn" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm border border-amber-400 transition flex items-center space-x-1.5 animate-pulse">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> <span>AI Generate</span>
+                        </button>
+                        <button onclick="exportToExcel()" class="bg-white/10 hover:bg-white/20 text-white text-xs font-medium py-2 px-3 rounded-lg border border-white/20 transition flex items-center space-x-1.5">
+                            <i class="fa-solid fa-file-excel"></i> <span class="hidden sm:inline">Export</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+            <!-- Warning Notification Engine -->
+            <div id="stalled-alert-banner" class="hidden mb-6 bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl flex items-start space-x-3 shadow-sm">
+                <div class="p-2 bg-amber-100 rounded-lg text-amber-600 mt-0.5"><i class="fa-solid fa-truck-ramp-box text-lg"></i></div>
+                <div class="flex-1">
+                    <h4 class="font-bold text-sm">System Warning: Stalled Shipments Detected</h4>
+                    <p class="text-xs text-amber-700 mt-0.5">One or more active packages have been sitting in transit for <strong>longer than 14 days</strong>.</p>
+                </div>
+            </div>
+
+            <div id="alert-banner" class="hidden mb-6 bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-xl flex items-center space-x-3 shadow-sm">
+                <div class="p-2 bg-rose-100 rounded-lg text-rose-600"><i class="fa-solid fa-triangle-exclamation text-lg"></i></div>
+                <div class="flex-1">
+                    <h4 class="font-bold text-sm">Action Required: Overdue Deliveries Detected</h4>
+                    <p class="text-xs text-rose-600">One or more packages have been in transit for <strong>over 30 days</strong> and need follow-up.</p>
+                </div>
+            </div>
+
+            <!-- Metrics Dashboard -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-3">
+                    <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg text-lg"><i class="fa-solid fa-building"></i></div>
+                    <div>
+                        <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Brands</h3>
+                        <p id="stat-total" class="text-xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-3">
+                    <div class="p-2.5 bg-amber-50 text-amber-600 rounded-lg text-lg"><i class="fa-solid fa-truck-fast"></i></div>
+                    <div>
+                        <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">In Transit</h3>
+                        <p id="stat-pending" class="text-xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-3">
+                    <div class="p-2.5 bg-orange-50 text-orange-600 rounded-lg text-lg"><i class="fa-solid fa-hourglass-empty"></i></div>
+                    <div>
+                        <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Stalled (>14d)</h3>
+                        <p id="stat-stalled" class="text-xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-3">
+                    <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg text-lg"><i class="fa-solid fa-circle-check"></i></div>
+                    <div>
+                        <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Arrived</h3>
+                        <p id="stat-received" class="text-xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-3">
+                    <div class="p-2.5 bg-rose-50 text-rose-600 rounded-lg text-lg"><i class="fa-solid fa-ban"></i></div>
+                    <div>
+                        <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Blacklisted</h3>
+                        <p id="stat-blacklisted" class="text-xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- Left Column: Entry Form -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 sticky top-6">
+                        <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-square-plus mr-2 text-indigo-600"></i> New Entry Record
+                        </h2>
+                        <form id="company-form" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Company Name *</label>
+                                <input type="text" id="comp-name" required placeholder="e.g., CeraVe" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 transition">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Sample Item *</label>
+                                    <input type="text" id="comp-item" required placeholder="e.g., Cream" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Category *</label>
+                                    <select id="comp-category" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 transition">
+                                        <option value="Skincare & Beauty">Skincare & Beauty</option>
+                                        <option value="Food & Beverage">Food & Beverage</option>
+                                        <option value="Household Goods">Household Goods</option>
+                                        <option value="Health & Medical">Health & Medical</option>
+                                        <option value="Pet Supplies">Pet Supplies</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Logistics Carrier</label>
+                                    <select id="comp-carrier" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 transition">
+                                        <option value="USPS">USPS</option>
+                                        <option value="UPS">UPS</option>
+                                        <option value="FedEx">FedEx</option>
+                                        <option value="DHL">DHL</option>
+                                        <option value="OnTrac">OnTrac</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Ship Date *</label>
+                                    <input type="date" id="comp-ship-date" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 transition">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Notes</label>
+                                <textarea id="comp-notes" rows="2" placeholder="Optional notes" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 transition"></textarea>
+                            </div>
+
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-lg shadow-sm transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-plus"></i> <span>Add Entry</span>
+                            </button>
+                            <p id="form-error" class="hidden text-xs text-rose-600"></p>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right Column: Records Table -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                            <h2 class="text-base font-bold text-slate-800 flex items-center">
+                                <i class="fa-solid fa-table-list mr-2 text-indigo-600"></i> Shipment Records
+                            </h2>
+                            <span id="record-count" class="text-xs text-slate-400 font-medium">0 records</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider">
+                                    <tr>
+                                        <th class="text-left px-5 py-3 font-semibold">Company</th>
+                                        <th class="text-left px-5 py-3 font-semibold">Item</th>
+                                        <th class="text-left px-5 py-3 font-semibold">Category</th>
+                                        <th class="text-left px-5 py-3 font-semibold">Carrier</th>
+                                        <th class="text-left px-5 py-3 font-semibold">Days</th>
+                                        <th class="text-left px-5 py-3 font-semibold">Status</th>
+                                        <th class="text-right px-5 py-3 font-semibold">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="records-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                            <p id="empty-state" class="hidden text-center text-sm text-slate-400 py-10">No shipment records yet. Add your first entry to get started.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="bg-white border-t border-slate-100 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-400">
+            &copy; 2026 Freebie Tingz. Internal logistics tracking tool.
+        </div>
+    </footer>
+
+    <!-- Privacy & Terms Modal -->
+    <div id="privacy-modal" class="hidden fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-lg max-w-lg w-full p-6 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-800">Privacy & Terms</h3>
+                <button onclick="closePrivacyModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="text-sm text-slate-600 space-y-3">
+                <p>This tool stores the shipment records you enter (company name, item, category, carrier, ship date, and notes) in a private database used only to power this dashboard.</p>
+                <p>Data is used solely to track sample shipments and flag stalled or overdue deliveries. It is not shared with third parties.</p>
+                <p>By using this tool you agree the information entered is accurate to the best of your knowledge and is for internal tracking purposes only.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
