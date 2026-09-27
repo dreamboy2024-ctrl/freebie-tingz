@@ -1,0 +1,228 @@
+Code for freebie app
+
+
+
+const SYSTEM_TODAY = new Date("2026-09-14");
+let companies = [
+{ id: 1, name: 'CeraVe Samples', item: 'Daily Lotion Trial Pack', category: 'Skincare & Beauty', requestedDate: '2026-08-15', delivery: '2026-09-01', carrier: 'USPS', tracking: '9400100000000000000000', url: 'cerave.com', status: 'Pending', notes: 'Completely free no-strings execution.' },
+{ id: 2, name: 'SampleSource Box', item: 'Fall Household Discovery Kit', category: 'Household Goods', requestedDate: '2026-09-08', delivery: '2026-10-05', carrier: 'UPS', tracking: '1Z9999999999999999', url: 'samplesource.com', status: 'Pending', notes: 'Standard transit frame. Moving well.' },
+{ id: 3, name: 'StalledTea Corp', item: 'Chamomile Relax Infusion Trio', category: 'Food & Beverage', requestedDate: '2026-08-20', delivery: '2026-09-20', carrier: 'FedEx', tracking: '432109876543', url: 'https://twiningsusa.com', status: 'Pending', notes: 'Has been transit-locked for over 24 days without status resolution.' },
+{ id: 4, name: 'ScammySkin Inc.', item: 'Vitamin C Serum Mini', category: 'Skincare & Beauty', requestedDate: '2026-07-01', delivery: '', carrier: 'Unassigned', tracking: '', url: 'https://example.com', status: 'Blacklisted', notes: 'Flagged for forced auto-ship billing routines.' }
+];
+const aiPool = [
+{ name: 'Kiehl's Fine Lines', item: 'Super Multi-Corrective Cream Mini', category: 'Skincare & Beauty', notes: 'Dispatches high-value mini components seasonally via clear web submission forms.' },
+{ name: 'Folgers Premium', item: 'Classic Roast Single-Serve Pod Pods', category: 'Food & Beverage', notes: 'Requires zero post-delivery review workflows.' },
+{ name: 'Purina Pet Food', item: 'Tender Selects Cat Food Mini Bag', category: 'Pet Supplies', notes: 'Shipped fully cost-exempt directly through postal networks.' }
+];
+const form = document.getElementById('company-form');
+const container = document.getElementById('company-container');
+const emptyState = document.getElementById('empty-state');
+const searchBar = document.getElementById('search-bar');
+const filterCat = document.getElementById('filter-category');
+const filterStatus = document.getElementById('filter-status');
+const alertBanner = document.getElementById('alert-banner');
+const stalledBanner = document.getElementById('stalled-alert-banner');
+const privacyModal = document.getElementById('privacy-modal');
+function openPrivacyModal() { privacyModal.classList.remove('hidden'); }
+function closePrivacyModal() { privacyModal.classList.add('hidden'); }
+function isItemOverdue(item) {
+if (item.status !== 'Pending' || !item.delivery) return false;
+const deliveryDate = new Date(item.delivery);
+return deliveryDate < SYSTEM_TODAY;
+}
+function isItemStalled(item) {
+if (item.status !== 'Pending' || !item.requestedDate) return false;
+const requestDate = new Date(item.requestedDate);
+const diffTime = Math.abs(SYSTEM_TODAY - requestDate);
+const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+return diffDays > 14;
+}
+function getCarrierTrackingUrl(carrier, trackingNum) {
+if (!trackingNum) return null;
+const cleanNum = trackingNum.trim();
+switch(carrier) {
+case 'USPS': return https://usps.com{cleanNum};
+case 'FedEx': return https://fedex.com{cleanNum};
+case 'UPS': return https://ups.com{cleanNum};
+case 'DHL': return https://dhl.com{cleanNum};
+default: return https://google.com{encodeURIComponent(carrier + ' tracking ' + cleanNum)};
+}
+}
+function updateMetrics() {
+document.getElementById('stat-total').innerText = companies.length;
+document.getElementById('stat-pending').innerText = companies.filter(c => c.status === 'Pending').length;
+document.getElementById('stat-received').innerText = companies.filter(c => c.status === 'Received').length;
+document.getElementById('stat-blacklisted').innerText = companies.filter(c => c.status === 'Blacklisted').length;
+document.getElementById('stat-stalled').innerText = companies.filter(isItemStalled).length;
+if (companies.some(isItemOverdue)) alertBanner.classList.remove('hidden');
+else alertBanner.classList.add('hidden');
+if (companies.some(isItemStalled)) stalledBanner.classList.remove('hidden');
+else stalledBanner.classList.add('hidden');
+}
+function getStatusStyle(c) {
+if (c.status === 'Blacklisted') return 'bg-rose-100 text-rose-800 border-rose-300';
+if (isItemOverdue(c)) return 'bg-rose-50 text-rose-700 border-rose-200';
+if (isItemStalled(c)) return 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+if (c.status === 'Received') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+if (c.status === 'Pending') return 'bg-amber-50 text-amber-700 border-amber-200';
+return 'bg-slate-100 text-slate-700 border-slate-300';
+}
+function triggerAiGeneration() {
+if(aiPool.length === 0) {
+alert("AI database catalog synchronization complete!");
+return;
+}
+const baseItem = aiPool.shift();
+const generatedItem = {
+id: Date.now(),
+name: baseItem.name,
+item: baseItem.item,
+category: baseItem.category,
+requestedDate: '2026-09-13',
+delivery: '',
+carrier: 'Unassigned',
+tracking: '',
+url: https://google.com{encodeURIComponent(baseItem.name + ' free sample')},
+status: 'Not Requested',
+notes: [AI Discovered Engine Variant] ${baseItem.notes}
+};
+companies.unshift(generatedItem);
+updateMetrics();
+renderList();
+}
+function renderList() {
+const searchVal = searchBar.value.toLowerCase();
+const catVal = filterCat.value;
+const statusVal = filterStatus.value;
+const filtered = companies.filter(c => {
+const matchesSearch = c.name.toLowerCase().includes(searchVal) || c.item.toLowerCase().includes(searchVal) || c.tracking.includes(searchVal);
+const matchesCat = catVal === 'All' || c.category === catVal;
+let matchesStatus = true;
+if (statusVal === 'Overdue') {
+matchesStatus = isItemOverdue(c);
+} else if (statusVal === 'Stalled') {
+matchesStatus = isItemStalled(c);
+} else if (statusVal === 'Blacklisted') {
+matchesStatus = c.status === 'Blacklisted';
+} else if (statusVal !== 'All') {
+matchesStatus = c.status === statusVal && !isItemOverdue(c);
+} else {
+matchesStatus = c.status !== 'Blacklisted';
+}
+return matchesSearch && matchesCat && matchesStatus;
+});
+container.innerHTML = '';
+if(filtered.length === 0) {
+emptyState.classList.remove('hidden');
+return;
+}
+emptyState.classList.add('hidden');
+filtered.forEach(c => {
+const card = document.createElement('div');
+const isOverdue = isItemOverdue(c);
+const isStalled = isItemStalled(c);
+const trackingUrl = getCarrierTrackingUrl(c.carrier, c.tracking);
+card.className = bg-white p-5 rounded-xl border ${c.status === 'Blacklisted' ? 'border-rose-300 bg-rose-50/10' : isOverdue ? 'border-rose-300 bg-rose-50/5' : isStalled ? 'border-amber-400 bg-amber-50/20 shadow-sm' : 'border-slate-200'} hover:shadow-sm transition flex flex-col justify-between space-y-3;
+let textLabel = c.status;
+if (c.status === 'Blacklisted') textLabel = '🚫 Blacklisted';
+else if (isOverdue) textLabel = '❌ Overdue';
+else if (isStalled) textLabel = '⚠️ Stalled (>14d)';
+card.innerHTML = <div class="flex justify-between items-start"> <div> <div class="flex items-center space-x-2 flex-wrap gap-y-1"> <h4 class="font-bold ${c.status === 'Blacklisted' ? 'text-slate-500 line-through' : 'text-slate-800'} text-base">${c.name}</h4> <span class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">${c.category}</span> ${c.carrier !== 'Unassigned' ?${c.carrier}` : ''}
+
+${c.item}
+
+
+
+${textLabel}
+
+Requested: ${c.requestedDate}
+
+${c.tracking ? <div class="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 flex items-center justify-between text-xs font-mono text-slate-600"> <span><i class="fa-solid fa-barcode mr-1.5 text-slate-400"></i>${c.tracking}</span> ${trackingUrl ? Track Shipment: ''} </div> : ''}
+${c.notes ? <p class="text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-slate-500 italic">"${c.notes}"</p> : ''}
+${c.url && c.status !== 'Blacklisted' ? <a href="${c.url}" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-semibold flex items-center"><i class="fa-solid fa-arrow-up-right-from-square mr-1 text-[10px]"></i> Visit Link</a> : 'Link Disabled'}
+
+
+${c.status !== 'Blacklisted' ? <button onclick="blacklistCompany(${c.id})" class="text-rose-600 hover:bg-rose-50 px-2 py-1 rounded font-semibold transition"><i class="fa-solid fa-ban mr-1"></i> Blacklist</button>
+
+
+: ''}
+Cycle Status
+
+
+
+`;
+container.appendChild(card);
+});
+}
+form.addEventListener('submit', (e) => {
+e.preventDefault();
+const newCompany = {
+id: Date.now(),
+name: document.getElementById('comp-name').value,
+item: document.getElementById('comp-item').value,
+category: document.getElementById('comp-category').value,
+requestedDate: document.getElementById('comp-requested-date').value,
+delivery: document.getElementById('comp-delivery').value,
+carrier: document.getElementById('comp-carrier').value,
+tracking: document.getElementById('comp-tracking').value,
+url: document.getElementById('comp-url').value,
+status: document.getElementById('comp-status').value,
+notes: document.getElementById('comp-notes').value
+};
+companies.unshift(newCompany);
+form.reset();
+updateMetrics();
+renderList();
+});
+function toggleStatus(id) {
+const index = companies.findIndex(c => c.id === id);
+if (index !== -1) {
+const current = companies[index].status;
+if (current === 'Not Requested') companies[index].status = 'Pending';
+else if (current === 'Pending') companies[index].status = 'Received';
+else companies[index].status = 'Not Requested';
+updateMetrics();
+renderList();
+}
+}
+function blacklistCompany(id) {
+const index = companies.findIndex(c => c.id === id);
+if (index !== -1) {
+companies[index].status = 'Blacklisted';
+if (!companies[index].notes.includes('[Blacklisted]')) {
+companies[index].notes = [Blacklisted] Flagged for verification updates. + companies[index].notes;
+}
+updateMetrics();
+renderList();
+}
+}
+function deleteCompany(id) {
+companies = companies.filter(c => c.id !== id);
+updateMetrics();
+renderList();
+}
+function exportToExcel() {
+if(companies.length === 0) return;
+let csvContent = "data:text/csv;charset=utf-8,Brand,Item,Category,DateRequested,TargetETA,Carrier,TrackingNumber,UrlSource,Status,InternalNotes\n";
+companies.forEach(c => {
+let row = "${c.name}","${c.item}","${c.category}","${c.requestedDate}","${c.delivery}","${c.carrier}","${c.tracking}","${c.url}","${c.status}","${c.notes}";
+csvContent += row + "\n";
+});
+const encodedUri = encodeURI(csvContent);
+const link = document.createElement("a");
+link.setAttribute("href", encodedUri);
+link.setAttribute("download", "FreebieTingz_Logistics.csv");
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+}
+searchBar.addEventListener('input', renderList);
+filterCat.addEventListener('change', renderList);
+filterStatus.addEventListener('change', renderList);
+// Core App Initialization
+updateMetrics();
+renderList();
+
+
+
+
